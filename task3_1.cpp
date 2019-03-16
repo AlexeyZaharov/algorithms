@@ -13,6 +13,10 @@ private:
 
 public:
     my_queue() : buf(nullptr), capacity(0), head(0), tail(0) {}
+    
+    bool is_empty() {
+        return capacity == 0;
+    }
 
     T push_back(const T& elem);
 
@@ -46,11 +50,11 @@ int main() {
             switch(pair.first) {
                 case 2: {
                     int result;
-                    try {
-                        result = queue.pop_front();
-                    }
-                    catch(int&) {
+                    if (queue.is_empty()) {
                         result = -1;
+                    }
+                    else {
+                        result = queue.pop_front();
                     }
 
                     if (result != pair.second) {
@@ -125,9 +129,7 @@ T my_queue<T>::push_back(const T& elem) {
 
 template <typename T>
 T my_queue<T>::pop_front() {
-    if ( capacity == 0) {
-        throw -1;
-    }
+    assert(is_empty() != true);
 
     size_t last_head = head;
     T elem = buf[last_head];
