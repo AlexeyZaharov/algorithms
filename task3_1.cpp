@@ -129,7 +129,7 @@ T my_queue<T>::push_back(const T& elem) {
 
 template <typename T>
 T my_queue<T>::pop_front() {
-    assert(is_empty() != true);
+    //assert(is_empty() != true);
 
     size_t last_head = head;
     T elem = buf[last_head];
