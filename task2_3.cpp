@@ -35,15 +35,15 @@ std::vector<int> find_intersection(const int* array_one, const size_t& size_1, c
     size_t end = 0;
 
     for (size_t i = 0; i < size_2 && new_beg < size_1; ++i) {
-        while(new_beg*new_beg < size_1 && array_two[i] > array_one[new_beg*new_beg]) {
+        while(2*new_beg < size_1 && array_two[i] > array_one[2*new_beg]) {
             if(new_beg != 0)
             	new_beg *= 2;
             else {
        		    new_beg = 1;
        	    }
         }
-    	if (new_beg*new_beg < size_1){
-        	end = new_beg*new_beg;
+    	if (2*new_beg < size_1){
+        	end = new_beg*2;
         }
         else {
     		end = size_1 - 1;
