@@ -9,7 +9,6 @@
 определить минимальное число показов рекламы.
 */
 
-
 #include <iostream>
 
 template <typename T>
@@ -93,6 +92,7 @@ size_t number_of_advertising(const std::pair<T, T>* array, const size_t& size) {
         else if (unique_array[i].first <= last_advertising) {
             --num;
             before_last_advertising = last_advertising;
+            last_advertising = unique_array[i].second;
         }
         else {
             last_advertising = unique_array[i].second;
