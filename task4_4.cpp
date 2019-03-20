@@ -28,6 +28,18 @@ public:
     my_heap(const size_t& screen_size) : cur_ind(0) {
         buf = new T[screen_size];
     }
+    
+    my_heap(const T* array, const size_t screen_size, const size_t size) : cur_ind(0) {
+        buf = new T[size];
+        
+        for (size_t i = 0; i < screen_size - 1; ++i) {
+            buf[cur_ind++] = array[i];
+        }
+        
+        for (int i = cur_ind/2; i >= 0; --i) {
+            sift_down(i);
+        }
+    }
 
     void insert(const T& elem);
 
@@ -50,43 +62,43 @@ int max_in_screen(my_heap<T>& heap, const size_t& screen_size, const size_t& i) 
     return heap.peek_max().first;
 }
 
+void take_array_of_max(const std::pair<int, size_t>* array, const size_t& size, const size_t& screen_size) {
+	int* array_2 = new int[size - screen_size + 1];
+
+    my_heap<std::pair<int, size_t>> heap(array, screen_size, size);
+
+    for (size_t i = screen_size - 1, j = 0; i < size; ++i, ++j) {
+        heap.insert(array[i]);
+        array_2[j] = max_in_screen(heap, screen_size, i);
+    }
+
+    for (size_t i = 0; i < size - screen_size + 1; ++i) {
+        std::cout << array_2[i] << ' ';
+    }
+
+    delete[] array_2;
+}
+
 int main() {
-    int* array;
+    std::pair<int, size_t>* array;
     size_t size = 0;
 
     std::cin >> size;
 
-    array = new int[size];
+    array = new std::pair<int, size_t>[size];
 
     for (size_t i = 0; i < size; ++i) {
         int elem;
         std::cin >> elem;
-        array[i] = elem;
+        array[i] = std::make_pair(elem, i);
     }
 
-    int* array_2;
     size_t screen_size = 0;
 
     std::cin >> screen_size;
 
     if (screen_size != 0) {
-        array_2 = new int[size - screen_size + 1];
-
-        my_heap<std::pair<int, size_t>> heap(size);
-        for(size_t i = 0; i < screen_size - 1; ++i) {
-            heap.insert(std::make_pair(array[i], i));
-        }
-
-        for (size_t i = screen_size - 1, j = 0; i < size; ++i, ++j) {
-            heap.insert(std::make_pair(array[i], i));
-            array_2[j] = max_in_screen(heap, screen_size, i);
-        }
-
-        for (size_t i = 0; i < size - screen_size + 1; ++i) {
-            std::cout << array_2[i] << ' ';
-        }
-
-        delete[] array_2;
+        take_array_of_max(array, size, screen_size);
     }
 
     delete[] array;
@@ -130,7 +142,7 @@ void my_heap<T>::sift_down(const size_t& ind) {
 }
 
 template <typename T>
-void my_heap<T>::insert(const std::pair<T, size_t>& elem) {
+void my_heap<T>::insert(const T& elem) {
     buf[cur_ind++] = elem;
     sift_up(cur_ind - 1);
 }
