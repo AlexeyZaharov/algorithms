@@ -17,23 +17,23 @@
 template <typename T>
 class my_heap {
 private:
-    std::pair<T, size_t>* buf;
+    T* buf;
     size_t cur_ind;
 
     void sift_up(size_t ind);
 
     void sift_down(const size_t& ind);
-
+    
 public:
     my_heap(const size_t& screen_size) : cur_ind(0) {
-        buf = new std::pair<T, size_t>[screen_size];
+        buf = new T[screen_size];
     }
 
-    void insert(const std::pair<T, size_t>& elem);
+    void insert(const T& elem);
 
-    std::pair<T, size_t> extract_max();
+    T extract_max();
 
-    std::pair<T, size_t> peek_max() const {
+    T peek_max() const {
         return buf[0];
     }
 
@@ -41,7 +41,6 @@ public:
         delete[] buf;
     }
 };
-
 
 template <typename T>
 int max_in_screen(my_heap<T>& heap, const size_t& screen_size, const size_t& i) {
@@ -73,7 +72,7 @@ int main() {
     if (screen_size != 0) {
         array_2 = new int[size - screen_size + 1];
 
-        my_heap<int> heap(size);
+        my_heap<std::pair<int, size_t>> heap(size);
         for(size_t i = 0; i < screen_size - 1; ++i) {
             heap.insert(std::make_pair(array[i], i));
         }
@@ -137,9 +136,9 @@ void my_heap<T>::insert(const std::pair<T, size_t>& elem) {
 }
 
 template <typename T>
-std::pair<T, size_t> my_heap<T>::extract_max() {
+T my_heap<T>::extract_max() {
     if(cur_ind != 0) {
-        std::pair<int, size_t> max = buf[0];
+        T max = buf[0];
 
         buf[0] = buf[--cur_ind];
         sift_down(0);
