@@ -60,7 +60,7 @@ size_t partition(T* array, const size_t& beg, const size_t& end){
     return i;
 }
 
-template <typename T>
+template <typename T, typename _cmp = my_comparator<T>>
 T kstat(const T* array, const size_t& size, size_t& k) {
     size_t beg = 0;
     size_t end = size - 1;
