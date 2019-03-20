@@ -50,7 +50,7 @@ size_t partition(T* array, const size_t& beg, const size_t& end){
 
     size_t i = beg;
     for(size_t j = beg; j < end; ++j) {
-        if(array[j] <= array[end]) {
+        if(!cmp(array[end], array[j])) {
             std::swap(array[i++], array[j]);
         }
     }
