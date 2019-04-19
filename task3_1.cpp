@@ -1,160 +1,236 @@
+/*
+Дано число N < 106 и последовательность пар целых чисел из [-231..231] длиной N.
+Построить декартово дерево из N узлов, характеризующихся парами чисел {Xi, Yi}.
+Каждая пара чисел {Xi, Yi} определяет ключ Xi и приоритет Yi в декартовом дереве.
+Добавление узла в декартово дерево выполняйте второй версией алгоритма, рассказанного на лекции:
+При добавлении узла (x, y) выполняйте спуск по ключу до узла P с меньшим приоритетом. Затем разбейте найденное
+поддерево по ключу x так, чтобы в первом поддереве все ключи меньше x, а во втором больше или равны x. Получившиеся два
+дерева сделайте дочерними для нового узла (x, y). Новый узел вставьте на место узла P.
+Построить также наивное дерево поиска по ключам Xi методом из задачи 2.
+Вычислить разницу глубин наивного дерева поиска и декартового дерева. Разница может быть отрицательна.
+*/
+
 #include <iostream>
-#include <cmath>
+#include <vector>
 
-template <typename T>
-class my_queue {
-private:
-    T* buf;
-    size_t capacity;
-    size_t head;
-    size_t tail;
+using namespace std;
 
-    void resize(const size_t&& new_capacity);
-
-public:
-    my_queue() : buf(nullptr), capacity(0), head(0), tail(0) {}
-    
-    bool is_empty() {
-        return capacity == 0;
-    }
-
-    T push_back(const T& elem);
-
-    T pop_front();
-
-    ~my_queue(){
-        delete[] buf;
-    }
+struct CNode {
+    int data;
+    int priority;
+    CNode* left,* right;
+    CNode(int Key, int Priority, CNode* Left, CNode* Right);
 };
 
+CNode::CNode (int Key, int Priority, CNode* Left, CNode* Right) {
+    data = Key;
+    priority = Priority;
+    left = Left;
+    right = Right;
+}
+
+class BinTree {
+public:
+    BinTree(CNode* node);
+    void Insert(int key);
+    int FindMaxDepth();
+    void DeleteTree();
+private:
+    CNode* root;
+};
+
+BinTree::BinTree(CNode *node) {
+    root = node;
+}
+
+void BinTree::DeleteTree() {
+    vector<CNode*> level;
+    vector<CNode*> vecForHelp;
+    level.push_back(root);
+    while(level.size() != 0) {
+        for (int i = 0; i < level.size(); ++i) {
+            if (level[i]->left != nullptr) {
+                vecForHelp.push_back(level[i]->left);
+            }
+            if (level[i]->right != nullptr) {
+                vecForHelp.push_back(level[i]->right);
+            }
+            delete(level[i]);
+        }
+        level.clear();
+        level = vecForHelp;
+        vecForHelp.clear();
+    }
+}
+
+void BinTree::Insert(int key) {
+    if (root == nullptr) {
+        root = new CNode(key, 0, nullptr, nullptr);
+        return;
+    }
+    CNode* current = root;
+    while(true) {
+        if (key >= current->data) {
+            if (current->right == nullptr) {
+                current->right = new CNode(key, 0, nullptr, nullptr);
+                return;
+            } else {
+                current = current->right;
+            }
+        } else {
+            if (current->left == nullptr) {
+                current->left = new CNode(key, 0, nullptr, nullptr);
+                return;
+            } else {
+                current = current->left;
+            }
+        }
+    }
+}
+
+int BinTree::FindMaxDepth() {
+    vector<CNode*> level;
+    vector<CNode*> vecForHelp;
+    level.push_back(root);
+    int maxDepth = 0;
+    while(level.size() != 0) {
+        for (int i = 0; i < level.size(); ++i) {
+            if (level[i]->left != nullptr) {
+                vecForHelp.push_back(level[i]->left);
+            }
+            if (level[i]->right != nullptr) {
+                vecForHelp.push_back(level[i]->right);
+            }
+        }
+        level.clear();
+        level = vecForHelp;
+        vecForHelp.clear();
+        if (level.size() != 0) {
+            ++maxDepth;
+        }
+    }
+    return maxDepth;
+}
+
+class DecTree {
+public:
+    DecTree(CNode* node);
+    void DecInsert(CNode*& node, int key, int priority);
+    void Split(CNode* node, int key, CNode*& left, CNode*& right);
+    void DeleteTree();
+    CNode* GetRoot();
+    int FindMaxDepth();
+private:
+    CNode* root;
+};
+
+DecTree::DecTree(CNode *node) {
+    root = node;
+}
+
+CNode* DecTree::GetRoot() {
+    return root;
+}
+
+void DecTree::DeleteTree() {
+    vector<CNode*> level;
+    vector<CNode*> vecForHelp;
+    level.push_back(root);
+    while(level.size() != 0) {
+        for (int i = 0; i < level.size(); ++i) {
+            if (level[i]->left != nullptr) {
+                vecForHelp.push_back(level[i]->left);
+            }
+            if (level[i]->right != nullptr) {
+                vecForHelp.push_back(level[i]->right);
+            }
+            delete(level[i]);
+        }
+        level.clear();
+        level = vecForHelp;
+        vecForHelp.clear();
+    }
+}
+
+void DecTree::Split(CNode* node, int key, CNode*& left, CNode*& right) {
+    if (!node) {
+        left = right = nullptr;
+    } else {
+        if ((*node).data <= key) {
+            Split(node->right, key, node->right, right);
+            left = node;
+        } else {
+            Split(node->left, key, left, node->left);
+            right = node;
+        }
+    }
+}
+
+void DecTree::DecInsert(CNode*& node, int key, int priority) {
+    if (node == nullptr) {
+        node = new CNode(key, priority, nullptr, nullptr);
+        return;
+    }
+    else if(node->priority < priority) {
+        CNode* Left;
+        CNode* Right;
+        Split (node, key, Left, Right);
+        if (node == root) {
+            root = new CNode (key, priority, Left, Right);
+        } else {
+            node = new CNode(key, priority, Left, Right);
+        }
+        return;
+    } else{
+        if (node->data > key) {
+            DecInsert(node->left, key, priority);
+
+        } else {
+            DecInsert(node->right, key, priority);
+        }
+    }
+}
+
+int DecTree::FindMaxDepth() {
+    vector<CNode*> level;
+    vector<CNode*> vecForHelp;
+    level.push_back(root);
+    int maxDepth = 0;
+    while(level.size() != 0) {
+        for (int i = 0; i < level.size(); ++i) {
+            if (level[i]->left != nullptr) {
+                vecForHelp.push_back(level[i]->left);
+            }
+            if (level[i]->right != nullptr) {
+                vecForHelp.push_back(level[i]->right);
+            }
+        }
+        level.clear();
+        level = vecForHelp;
+        vecForHelp.clear();
+        if (level.size() != 0) {
+            ++maxDepth;
+        }
+    }
+    return maxDepth;
+}
+
 int main() {
-    enum {NO, YES} success = YES;
-
-    my_queue<int> queue;
-    size_t n = 0;
-
-    std::cin >> n;
-
-    if(n == 0) {
-        success = NO;
+    int amount, key, priority;
+    cin >> amount;
+    cin >> key >> priority;
+    CNode* binnode = new CNode(key, 0, nullptr, nullptr);
+    CNode* decnode = new CNode(key, priority, nullptr, nullptr);
+    BinTree tree(binnode);
+    DecTree decTree(decnode);
+    for (int i = 1; i < amount; ++i) {
+        cin >> key >> priority;
+        tree.Insert(key);
+        decnode = decTree.GetRoot();
+        decTree.DecInsert(decnode, key, priority);
     }
-
-    for (size_t i = 0; i < n; ++i) {
-        int command, value;
-
-        std::cin >> command >> value;
-
-        auto pair = std::make_pair(command, value);
-
-        if (success == YES) {
-            switch(pair.first) {
-                case 2: {
-                    int result;
-                    if (queue.is_empty()) {
-                        result = -1;
-                    }
-                    else {
-                        result = queue.pop_front();
-                    }
-
-                    if (result != pair.second) {
-                        success = NO;
-                    }
-                    break;
-                }
-                case 3: {
-                    queue.push_back(pair.second);
-                    break;
-                }
-            }
-        }
-    }
-
-    success == YES ? std::cout << "YES" : std::cout << "NO";
-
+    cout << tree.FindMaxDepth() - decTree.FindMaxDepth();
+    tree.DeleteTree();
+    decTree.DeleteTree();
     return 0;
-}
-
-template <typename T>
-void my_queue<T>::resize(const size_t&& new_capacity) {
-    if(capacity != 0) {
-        size_t last_capacity = capacity;
-        size_t new_tail = 0;
-        capacity = new_capacity;
-
-        T* new_buf = new T[capacity];
-
-        if (head <= tail) {
-            for (size_t i = 0, j = head; j <= tail; ++i, ++j) {
-                new_buf[i] = buf[j];
-                new_tail = i;
-            }
-        }
-        else {
-            for (size_t i = 0, j = head; j < last_capacity; ++i, ++j, ++new_tail) {
-                new_buf[i] = buf[j];
-            }
-            for (size_t i = new_tail, j = 0; j <= tail; ++i, ++j) {
-                new_buf[i] = buf[j];
-                new_tail = i;
-            }
-        }
-
-        delete[] buf;
-
-        buf = new_buf;
-        head = 0;
-        tail = new_tail;
-        capacity = new_capacity;
-    }
-    else {
-        capacity = 1;
-        buf = new T[capacity];
-        head = 0;
-        tail = 0;
-    }
-}
-
-template <typename T>
-T my_queue<T>::push_back(const T& elem) {
-    if ( capacity == 0 || (tail + 1) % capacity == head ) {
-        resize(capacity*2);
-    }
-
-    tail = (tail + 1) % capacity;
-    buf[tail] = elem;
-
-    return elem;
-}
-
-template <typename T>
-T my_queue<T>::pop_front() {
-    //assert(is_empty() != true);
-
-    size_t last_head = head;
-    T elem = buf[last_head];
-
-    head = (head + 1) % capacity;
-
-    if (last_head == tail) {
-        delete[] buf;
-        buf = nullptr;
-        capacity = 0;
-        head = tail = 0;
-    }
-    else if (head < tail) {
-        if (tail - head + 1 <= size_t(capacity / 4)) {
-            resize(size_t(capacity / 2));
-        }
-    }
-    else if (head > tail) {
-        if ((capacity - head) + (tail + 1) <= size_t(capacity / 4)) {
-            resize(size_t(capacity / 2));
-        }
-    }
-    else {
-        resize(1);
-    }
-
-    return elem;
 }
