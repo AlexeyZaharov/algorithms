@@ -19,29 +19,23 @@ struct CNode {
     int data;
     int priority;
     CNode* left,* right;
-    CNode(int Key, int Priority, CNode* Left, CNode* Right);
+    CNode(int Key, int Priority, CNode* Left, CNode* Right) {
+        data = Key;
+        priority = Priority;
+        left = Left;
+        right = Right;
+    }
 };
-
-CNode::CNode (int Key, int Priority, CNode* Left, CNode* Right) {
-    data = Key;
-    priority = Priority;
-    left = Left;
-    right = Right;
-}
 
 class BinTree {
 public:
-    BinTree(CNode* node);
+    BinTree(CNode* node) : root(node) {}
     void Insert(int key);
     int FindMaxDepth();
     void DeleteTree();
 private:
     CNode* root;
 };
-
-BinTree::BinTree(CNode *node) {
-    root = node;
-}
 
 void BinTree::DeleteTree() {
     vector<CNode*> level;
@@ -114,23 +108,20 @@ int BinTree::FindMaxDepth() {
 
 class DecTree {
 public:
-    DecTree(CNode* node);
+    DecTree(CNode* node) : root(node) {}
+    
     void DecInsert(CNode*& node, int key, int priority);
     void Split(CNode* node, int key, CNode*& left, CNode*& right);
     void DeleteTree();
-    CNode* GetRoot();
+    
+    CNode* GetRoot() {
+        return root;
+    }
+    
     int FindMaxDepth();
 private:
     CNode* root;
 };
-
-DecTree::DecTree(CNode *node) {
-    root = node;
-}
-
-CNode* DecTree::GetRoot() {
-    return root;
-}
 
 void DecTree::DeleteTree() {
     vector<CNode*> level;
