@@ -96,8 +96,6 @@ int main() {
                 break;
         }
 
-        table.out();
-
     }
 
     return 0;
@@ -110,13 +108,13 @@ void hash_table::rehash() {
     table_node* new_table = new table_node[new_capacity];
 
     for (size_t i = 0; i < _capacity; ++i) {
-        if (_table[i].state == status::USING) {
+        //if (_table[i].state == status::USING) {
 
             size_t h = hash(_table[i].str, new_capacity);
             size_t j = 0;
 
             while( j < new_capacity ) {
-                if (new_table[h].state != status::USING) {
+                if (new_table[h].state == status::NIL) {
                     break;
                 }
 
@@ -128,7 +126,7 @@ void hash_table::rehash() {
 
             new_table[h].str = _table[i].str;
             new_table[h].state = _table[i].state;
-        }
+        //}
     }
 
     delete[] _table;
@@ -139,7 +137,9 @@ void hash_table::rehash() {
 bool hash_table::insert(const std::string& str) {
 
     bool success = false;
+
     size_t h = hash(str, _capacity);
+    size_t pos = -1;
 
     for(size_t i = 0; i < _capacity; ++i) {
 
@@ -147,11 +147,14 @@ bool hash_table::insert(const std::string& str) {
             break;
         }
 
-        if (_table[h].state == status::USING) {
-                h += i + 1;
-                h %= _capacity;
+        if (_table[h].state == status::DELETED && pos == -1) {
+            pos = h;
+        }
+        else if (_table[h].state == status::NIL) {
+            if (pos != h && pos != -1) {
+                h = pos;
             }
-        else {
+
             _table[h].str = str;
             _table[h].state = status::USING;
 
@@ -159,6 +162,9 @@ bool hash_table::insert(const std::string& str) {
             success = true;
             break;
         }
+
+        h += i + 1;
+        h %= _capacity;
     }
 
     if (double(_count)/double(_capacity) >= 0.75 ) {
