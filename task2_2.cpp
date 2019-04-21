@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <stack>
+#include <vector>
 
 template <typename T>
 struct node {
@@ -39,11 +40,9 @@ public:
 
     void insert(const T& key);
     void remove(const T& key);
-    node<T>* find(const T& key);
+    bool find(const T& key);
 
-    node<T>* get_root() {
-        return root;
-    }
+    std::vector<T> pre_order();
 
     ~tree() {
         delete_tree(root);
@@ -51,7 +50,8 @@ public:
 };
 
 template <typename T>
-void pre_order(node<T>* root) {
+std::vector<T> tree<T>::pre_order() {
+    std::vector<T> vec;
     node<T>* cur = nullptr;
     std::stack<node<T>*> stack;
     stack.push(root);
@@ -62,11 +62,14 @@ void pre_order(node<T>* root) {
             stack.pop();
         }
         while (cur != nullptr){
-            std::cout << cur->key << " ";
+
+            vec.push_back(cur->key) ;
             if (cur->right != nullptr) stack.push(cur->right);
             cur=cur->left;
         }
     }
+
+    return vec;
 }
 
 int main() {
@@ -80,7 +83,11 @@ int main() {
         my_tree.insert(num);
     }
 
-    pre_order(my_tree.get_root());
+    std::vector<int> vec = my_tree.pre_order();
+
+    for (auto& i : vec) {
+        std::cout << i << " ";
+    }
 
     return 0;
 }
@@ -118,8 +125,6 @@ void tree<T>::insert(const T &key) {
     else {
         cur->left = node_;
     }
-
-
 }
 
 template <typename T>
@@ -177,12 +182,12 @@ void tree<T>::remove(const T &key){
 }
 
 template <typename T>
-node<T>* tree<T>::find(const T &key){
+bool tree<T>::find(const T &key){
     node<T>* cur = root;
 
     while (cur != nullptr) {
         if (cur->key == key) {
-            return cur;
+            return true;
         }
         else if (cur->key > key) {
             cur = cur->left;
@@ -192,5 +197,5 @@ node<T>* tree<T>::find(const T &key){
         }
     }
 
-    return nullptr;
+    return false;
 }
