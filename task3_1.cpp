@@ -11,94 +11,200 @@
 */
 
 #include <iostream>
+#include <stack>
 #include <vector>
 
-using namespace std;
-
-struct CNode {
-    int data;
+template <typename T>
+struct node {
+    node<T>* left;
+    node<T>* right;
     int priority;
-    CNode* left,* right;
-    CNode(int Key, int Priority, CNode* Left, CNode* Right) {
-        data = Key;
-        priority = Priority;
-        left = Left;
-        right = Right;
-    }
+    T key;
+
+    node() : left(nullptr), right(nullptr), priority(0), key() {}
 };
 
-class BinTree {
-public:
-    BinTree(CNode* node) : root(node) {}
-    void Insert(int key);
-    int FindMaxDepth();
-    void DeleteTree();
+template <typename T>
+class tree {
 private:
-    CNode* root;
+    node<T>* root;
+
+    void delete_tree(node<T>* tree) {
+        if (tree != nullptr) {
+            delete_tree(tree->left);
+            delete_tree(tree->right);
+        }
+
+        delete tree;
+    }
+
+    void delete_child_with_one_child(node<T>* parent, node<T>* child);
+    void delete_child_with_two_child(node<T> *node_);
+
+public:
+    tree() : root(nullptr) {}
+
+    void insert(const T& key);
+    void remove(const T& key);
+    bool find(const T& key);
+
+    std::vector<T> pre_order();
+    int find_max_depth();
+
+    ~tree() {
+        delete_tree(root);
+    }
 };
 
-void BinTree::DeleteTree() {
-    vector<CNode*> level;
-    vector<CNode*> vecForHelp;
-    level.push_back(root);
-    while(level.size() != 0) {
-        for (int i = 0; i < level.size(); ++i) {
-            if (level[i]->left != nullptr) {
-                vecForHelp.push_back(level[i]->left);
-            }
-            if (level[i]->right != nullptr) {
-                vecForHelp.push_back(level[i]->right);
-            }
-            delete(level[i]);
+template <typename T>
+std::vector<T> tree<T>::pre_order() {
+    std::vector<T> vec;
+    node<T>* cur = nullptr;
+    std::stack<node<T>*> stack;
+    stack.push(root);
+
+    while (cur != nullptr || !stack.empty()){
+        if (!stack.empty()){
+            cur =stack.top();
+            stack.pop();
         }
-        level.clear();
-        level = vecForHelp;
-        vecForHelp.clear();
+        while (cur != nullptr){
+
+            vec.push_back(cur->key) ;
+            if (cur->right != nullptr) stack.push(cur->right);
+            cur=cur->left;
+        }
     }
+
+    return vec;
 }
 
-void BinTree::Insert(int key) {
+template <typename T>
+void tree<T>::insert(const T &key) {
+    node<T>* node_ = new node<T>;
+    node_->key = key;
+
     if (root == nullptr) {
-        root = new CNode(key, 0, nullptr, nullptr);
+        root = node_;
         return;
     }
-    CNode* current = root;
-    while(true) {
-        if (key >= current->data) {
-            if (current->right == nullptr) {
-                current->right = new CNode(key, 0, nullptr, nullptr);
-                return;
-            } else {
-                current = current->right;
+
+    node<T>* cur = root;
+
+    while (cur->left != nullptr || cur->right != nullptr) {
+        if (cur->key > key) {
+            if (cur->left == nullptr) {
+                break;
             }
-        } else {
-            if (current->left == nullptr) {
-                current->left = new CNode(key, 0, nullptr, nullptr);
-                return;
-            } else {
-                current = current->left;
+            cur = cur->left;
+        }
+        else {
+            if (cur->right == nullptr) {
+                break;
+            }
+            cur = cur->right;
+        }
+    }
+
+    if (cur->key <= key) {
+        cur->right = node_;
+    }
+    else {
+        cur->left = node_;
+    }
+}
+
+template <typename T>
+void tree<T>::delete_child_with_one_child(node<T>* parent, node<T>* child) {
+    parent->key = child->key;
+    parent->left = child->left;
+    parent->right = child->right;
+
+    delete child;
+}
+
+template <typename T>
+void tree<T>::delete_child_with_two_child(node<T> *node_) {
+    node<T>* parent = node_;
+    node<T>* child = parent->right;
+
+    while (child->left != nullptr) {
+        parent = child;
+        child = child->left;
+    }
+
+    if (parent == node_) {
+        node_->right = child->right;
+    }
+    else {
+        parent->left = child->right;
+    }
+
+    node_->key = child->key;
+
+    delete child;
+}
+
+template <typename T>
+void tree<T>::remove(const T &key){
+    node<T>* node_= find(key);
+
+    if (node_ != nullptr) {
+        if (node_->left != nullptr && node_->right != nullptr) {
+            delete_child_with_two_child(node_);
+        }
+        else {
+            if (node_->left != nullptr) {
+                delete_child_with_one_child(node_, node_->left);
+            }
+            else if (node_->right != nullptr){
+                delete_child_with_one_child(node_, node_->right);
+            }
+            else {
+                delete node_;
+                node_ = nullptr;
             }
         }
     }
 }
 
-int BinTree::FindMaxDepth() {
-    vector<CNode*> level;
-    vector<CNode*> vecForHelp;
+template <typename T>
+bool tree<T>::find(const T &key){
+    node<T>* cur = root;
+
+    while (cur != nullptr) {
+        if (cur->key == key) {
+            return true;
+        }
+        else if (cur->key > key) {
+            cur = cur->left;
+        }
+        else {
+            cur = cur->right;
+        }
+    }
+
+    return false;
+}
+
+template <typename T>
+int tree<T>::find_max_depth() {
+    std::vector<node<T>*> level;
+    std::vector<node<T>*> vec;
     level.push_back(root);
     int maxDepth = 0;
     while(level.size() != 0) {
         for (int i = 0; i < level.size(); ++i) {
             if (level[i]->left != nullptr) {
-                vecForHelp.push_back(level[i]->left);
+                vec.push_back(level[i]->left);
             }
             if (level[i]->right != nullptr) {
-                vecForHelp.push_back(level[i]->right);
+                vec.push_back(level[i]->right);
             }
         }
         level.clear();
-        level = vecForHelp;
-        vecForHelp.clear();
+        level = vec;
+        vec.clear();
         if (level.size() != 0) {
             ++maxDepth;
         }
@@ -106,99 +212,122 @@ int BinTree::FindMaxDepth() {
     return maxDepth;
 }
 
-class DecTree {
-public:
-    DecTree(CNode* node) : root(node) {}
-    
-    void DecInsert(CNode*& node, int key, int priority);
-    void Split(CNode* node, int key, CNode*& left, CNode*& right);
-    void DeleteTree();
-    
-    CNode* GetRoot() {
-        return root;
-    }
-    
-    int FindMaxDepth();
+template <typename T>
+class dec_tree {
 private:
-    CNode* root;
+    node<T>* root;
+    void delete_tree();
+    void insert(node<T>*& node_, const T& key, int priority);
+
+public:
+    dec_tree() : root(nullptr) {}
+
+    void insert(const T& key, int priority);
+    void split(node<T> *node_, const T& key, node<T> *&left, node<T> *&right);
+
+    int find_max_depth();
+
+    ~dec_tree() {
+        delete_tree();
+    }
 };
 
-void DecTree::DeleteTree() {
-    vector<CNode*> level;
-    vector<CNode*> vecForHelp;
+template <typename T>
+void dec_tree<T>::delete_tree() {
+    std::vector<node<T>*> level;
+    std::vector<node<T>*> vec;
     level.push_back(root);
     while(level.size() != 0) {
         for (int i = 0; i < level.size(); ++i) {
             if (level[i]->left != nullptr) {
-                vecForHelp.push_back(level[i]->left);
+                vec.push_back(level[i]->left);
             }
             if (level[i]->right != nullptr) {
-                vecForHelp.push_back(level[i]->right);
+                vec.push_back(level[i]->right);
             }
             delete(level[i]);
         }
         level.clear();
-        level = vecForHelp;
-        vecForHelp.clear();
+        level = vec;
+        vec.clear();
     }
 }
 
-void DecTree::Split(CNode* node, int key, CNode*& left, CNode*& right) {
-    if (!node) {
+template <typename T>
+void dec_tree<T>::split(node<T> *node_, const T& key, node<T> *&left, node<T> *&right) {
+    if (!node_) {
         left = right = nullptr;
     } else {
-        if ((*node).data <= key) {
-            Split(node->right, key, node->right, right);
-            left = node;
+        if ((*node_).key <= key) {
+            split(node_->right, key, node_->right, right);
+            left = node_;
         } else {
-            Split(node->left, key, left, node->left);
-            right = node;
+            split(node_->left, key, left, node_->left);
+            right = node_;
         }
     }
 }
 
-void DecTree::DecInsert(CNode*& node, int key, int priority) {
-    if (node == nullptr) {
-        node = new CNode(key, priority, nullptr, nullptr);
+
+
+template <typename T>
+void dec_tree<T>::insert(node<T>*& node_, const T& key, int priority) {
+    if (node_ == nullptr) {
+        node_ = new node<T>;
+        node_->key = key;
+        node_->priority = priority;
         return;
-    }
-    else if(node->priority < priority) {
-        CNode* Left;
-        CNode* Right;
-        Split (node, key, Left, Right);
-        if (node == root) {
-            root = new CNode (key, priority, Left, Right);
+    } else if (node_->priority < priority) {
+        node<T> *left;
+        node<T> *right;
+        split(node_, key, left, right);
+        if (node_ == root) {
+            root = new node<T>;
+            node_->key = key;
+            node_->priority = priority;
+            node_->left = left;
+            node_->right = right;
         } else {
-            node = new CNode(key, priority, Left, Right);
+            node_ = new node<T>;
+            node_->key = key;
+            node_->priority = priority;
+            node_->left = left;
+            node_->right = right;
         }
         return;
-    } else{
-        if (node->data > key) {
-            DecInsert(node->left, key, priority);
+    } else {
+        if (node_->key > key) {
+            insert(node_->left, key, priority);
 
         } else {
-            DecInsert(node->right, key, priority);
+            insert(node_->right, key, priority);
         }
     }
 }
 
-int DecTree::FindMaxDepth() {
-    vector<CNode*> level;
-    vector<CNode*> vecForHelp;
+template <typename T>
+void dec_tree<T>::insert(const T& key, int priority) {
+    insert(root, key, priority);
+}
+
+template <typename T>
+int dec_tree<T>::find_max_depth() {
+    std::vector<node<T>*> level;
+    std::vector<node<T>*> vec;
     level.push_back(root);
     int maxDepth = 0;
     while(level.size() != 0) {
         for (int i = 0; i < level.size(); ++i) {
             if (level[i]->left != nullptr) {
-                vecForHelp.push_back(level[i]->left);
+                vec.push_back(level[i]->left);
             }
             if (level[i]->right != nullptr) {
-                vecForHelp.push_back(level[i]->right);
+                vec.push_back(level[i]->right);
             }
         }
         level.clear();
-        level = vecForHelp;
-        vecForHelp.clear();
+        level = vec;
+        vec.clear();
         if (level.size() != 0) {
             ++maxDepth;
         }
@@ -208,20 +337,22 @@ int DecTree::FindMaxDepth() {
 
 int main() {
     int amount, key, priority;
-    cin >> amount;
-    cin >> key >> priority;
-    CNode* binnode = new CNode(key, 0, nullptr, nullptr);
-    CNode* decnode = new CNode(key, priority, nullptr, nullptr);
-    BinTree tree(binnode);
-    DecTree decTree(decnode);
+    std::cin >> amount;
+    std::cin >> key >> priority;
+
+    tree<int> tree;
+    tree.insert(key);
+
+    dec_tree<int> dec_tree;
+    dec_tree.insert(key, priority);
+
     for (int i = 1; i < amount; ++i) {
-        cin >> key >> priority;
-        tree.Insert(key);
-        decnode = decTree.GetRoot();
-        decTree.DecInsert(decnode, key, priority);
+        std::cin >> key >> priority;
+        tree.insert(key);
+        dec_tree.insert(key, priority);
     }
-    cout << tree.FindMaxDepth() - decTree.FindMaxDepth();
-    tree.DeleteTree();
-    decTree.DeleteTree();
+    std::cout << tree.find_max_depth() - dec_tree.find_max_depth();
+
     return 0;
 }
+
