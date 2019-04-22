@@ -27,7 +27,8 @@ const size_t TABLE_INITIAL_SIZE= 8;
 const size_t a = 11;
 enum status {NIL, USING, DELETED} ;
 
-size_t hash(const std::string& str, const std::size_t& m) {
+template <typename T>
+size_t hash(const T& str, const std::size_t& m) {
     size_t hash = 0;
     for( auto& ch : str ) {
         hash = ( hash * a + ch ) % m;
@@ -35,29 +36,31 @@ size_t hash(const std::string& str, const std::size_t& m) {
     return hash;
 }
 
+template <typename T>
 struct table_node {
-    std::string str;
+    T str;
     int state;
 
     table_node() : str(""), state(status::NIL) {}
 };
 
+template <typename T>
 class hash_table {
 private:
     size_t _count;
     size_t _capacity;
-    table_node* _table;
+    table_node<T>* _table;
 
     void rehash();
 
 public:
     hash_table() : _count(0), _capacity(TABLE_INITIAL_SIZE) {
-        _table = new table_node[_capacity];
+        _table = new table_node<T>[_capacity];
     }
 
-    bool insert(const std::string& str);
-    bool remove(const std::string& str);
-    bool find(const std::string& str);
+    bool insert(const T& str);
+    bool remove(const T& str);
+    bool find(const T& str);
 
     void out() {
         for (size_t i = 0; i < _capacity; ++i) {
@@ -72,7 +75,7 @@ public:
 
 
 int main() {
-    hash_table table;
+    hash_table<std::string> table;
     while( true ) {
         char command = 0;
         std::string value;
@@ -102,19 +105,20 @@ int main() {
 
 }
 
-void hash_table::rehash() {
+template <typename T>
+void hash_table<T>::rehash() {
     size_t new_capacity = _capacity*2;
 
-    table_node* new_table = new table_node[new_capacity];
+    table_node<T>* new_table = new table_node<T>[new_capacity];
 
     for (size_t i = 0; i < _capacity; ++i) {
-        //if (_table[i].state == status::USING) {
+        if (_table[i].state == status::USING) {
 
             size_t h = hash(_table[i].str, new_capacity);
             size_t j = 0;
 
             while( j < new_capacity ) {
-                if (new_table[h].state == status::NIL) {
+                if (new_table[h].state != status::USING) {
                     break;
                 }
 
@@ -126,7 +130,7 @@ void hash_table::rehash() {
 
             new_table[h].str = _table[i].str;
             new_table[h].state = _table[i].state;
-        //}
+        }
     }
 
     delete[] _table;
@@ -134,7 +138,8 @@ void hash_table::rehash() {
     _table = new_table;
 }
 
-bool hash_table::insert(const std::string& str) {
+template <typename T>
+bool hash_table<T>::insert(const T& str) {
 
     bool success = false;
 
@@ -174,7 +179,8 @@ bool hash_table::insert(const std::string& str) {
     return success;
 }
 
-bool hash_table::remove(const std::string &str){
+template <typename T>
+bool hash_table<T>::remove(const T &str){
     bool success = false;
     size_t h = hash(str, _capacity);
 
@@ -197,7 +203,8 @@ bool hash_table::remove(const std::string &str){
     return success;
 }
 
-bool hash_table::find( const std::string &str ) {
+template <typename T>
+bool hash_table<T>::find( const T& str ) {
     size_t i = 0;
     size_t h = hash(str, _capacity);
     while( _table[h].state != status::NIL && i < _capacity ) {
