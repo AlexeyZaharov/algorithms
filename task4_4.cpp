@@ -10,154 +10,239 @@
 
 Формат выходных данных. Разделенные пробелом значения максимумов для каждого положения окна.
 */
-
 #include <iostream>
-#include <cmath>
-
-template <typename T>
-class my_heap {
-private:
-    T* buf;
-    size_t cur_ind;
-
-    void sift_up(size_t ind);
-
-    void sift_down(const size_t& ind);
-    
-public:
-    my_heap(const size_t& screen_size) : cur_ind(0) {
-        buf = new T[screen_size];
+#include <algorithm>
+ 
+using namespace std;
+ 
+struct node {
+    int key;
+    int height;
+    int number_of_children;
+    node* left;
+    node* right;
+ 
+    node(int getkey) {
+        key = getkey;
+        height = 1;
+        number_of_children = 1;
+        left = nullptr;
+        right = nullptr;
     }
-    
-    my_heap(const T* array, const size_t screen_size, const size_t size) : cur_ind(0) {
-        buf = new T[size];
-        
-        for (size_t i = 0; i < screen_size - 1; ++i) {
-            buf[cur_ind++] = array[i];
+ 
+    ~node() {
+        if (left != nullptr) {
+            delete left;
         }
-        
-        for (int i = cur_ind/2; i >= 0; --i) {
-            sift_down(i);
+        if (right != nullptr) {
+            delete right;
         }
-    }
-
-    void insert(const T& elem);
-
-    T extract_max();
-
-    T peek_max() const {
-        return buf[0];
-    }
-
-    ~my_heap(){
-        delete[] buf;
     }
 };
-
-template <typename T>
-int max_in_screen(my_heap<T>& heap, const size_t& screen_size, const size_t& i) {
-    while (heap.peek_max().second < i - screen_size + 1) {
-        heap.extract_max();
+ 
+int node_height(node* tree) {
+    if (tree == nullptr) {
+        return 0;
     }
-    return heap.peek_max().first;
+    return tree->height;
 }
-
-void take_array_of_max(const std::pair<int, size_t>* array, const size_t& size, const size_t& screen_size) {
-	int* array_2 = new int[size - screen_size + 1];
-
-    my_heap<std::pair<int, size_t>> heap(array, screen_size, size);
-
-    for (size_t i = screen_size - 1, j = 0; i < size; ++i, ++j) {
-        heap.insert(array[i]);
-        array_2[j] = max_in_screen(heap, screen_size, i);
+ 
+int num_children(node* tree) {
+    if (tree == nullptr) {
+        return 0;
     }
-
-    for (size_t i = 0; i < size - screen_size + 1; ++i) {
-        std::cout << array_2[i] << ' ';
-    }
-
-    delete[] array_2;
+    return tree->number_of_children;
 }
-
-int main() {
-    std::pair<int, size_t>* array;
-    size_t size = 0;
-
-    std::cin >> size;
-
-    array = new std::pair<int, size_t>[size];
-
-    for (size_t i = 0; i < size; ++i) {
-        int elem;
-        std::cin >> elem;
-        array[i] = std::make_pair(elem, i);
+ 
+int b_node(node* tree) {
+    if (tree == nullptr) {
+        return 0;
     }
-
-    size_t screen_size = 0;
-
-    std::cin >> screen_size;
-
-    if (screen_size != 0) {
-        take_array_of_max(array, size, screen_size);
-    }
-
-    delete[] array;
-    
-    return 0;
+    return (node_height(tree->right) - node_height(tree->left));
 }
-
-template <typename T>
-void my_heap<T>::sift_up(size_t ind) {
-    while(ind > 0) {
-        size_t parent = (ind - 1)/2;
-
-        if (buf[ind] <= buf[parent]) {
-            return;
-        }
-        else {
-            std::swap(buf[ind], buf[parent]);
-            ind = parent;
-        }
-    }
-}
-
-template <typename T>
-void my_heap<T>::sift_down(const size_t& ind) {
-    size_t left = 2*ind + 1;
-    size_t right = 2*ind + 2;
-
-    size_t largest = ind;
-
-    if(left < cur_ind && buf[left] > buf[largest]) {
-        largest = left;
-    }
-    if(right < cur_ind && buf[right] > buf[largest]) {
-        largest = right;
-    }
-
-    if(largest != ind) {
-        std::swap(buf[largest], buf[ind]);
-        sift_down(largest);
-    }
-}
-
-template <typename T>
-void my_heap<T>::insert(const T& elem) {
-    buf[cur_ind++] = elem;
-    sift_up(cur_ind - 1);
-}
-
-template <typename T>
-T my_heap<T>::extract_max() {
-    if(cur_ind != 0) {
-        T max = buf[0];
-
-        buf[0] = buf[--cur_ind];
-        sift_down(0);
-
-        return max;
+ 
+void update_children(node* tree) {
+    if (tree == nullptr) {
+        return;
     }
     else {
-        throw;
+        tree->number_of_children = 1;
+        if (tree->right != nullptr) {
+            tree->number_of_children += tree->right->number_of_children;
+        }
+        if (tree->left != nullptr) {
+            tree->number_of_children += tree->left->number_of_children;
+        }
     }
+}
+ 
+void update_height(node* tree) {
+    if (tree == nullptr) {
+        tree->height = 1;
+    }
+    tree->height = 1 + max(node_height(tree->right), node_height(tree->left));
+}
+ 
+node* small_left(node* tree) {
+    node* tmp = tree->right;
+    tree->right = tmp->left;
+    tmp->left = tree;
+    update_height(tree);
+    update_children(tree);
+    update_height(tmp);
+    update_children(tmp);
+    return tmp;
+}
+ 
+node* small_right(node* tree) {
+    node* tmp = tree->left;
+    tree->left = tmp->right;
+    tmp->right = tree;
+    update_height(tree);
+    update_children(tree);
+    update_height(tmp);
+    update_children(tmp);
+    return tmp;
+}
+ 
+node* balance(node* tree) {
+    update_height(tree);
+    update_children(tree);
+    if (tree == nullptr) {
+        return tree;
+    }
+    if (b_node(tree) == 2) {
+        if (b_node(tree->right) < 0) {
+            tree->right = small_right(tree->right);
+        }
+        return small_left(tree);
+    }
+ 
+    if (b_node(tree) == -2) {
+        if (b_node(tree->left) > 0) {
+            tree->left = small_left(tree->left);
+        }
+        return small_right(tree);
+    }
+    return tree;
+}
+ 
+node* add(node* tree, int key) {
+    if (tree == nullptr) {
+        return new node(key);
+    }
+    if (key < tree->key) {
+        tree->left = add(tree->left, key);
+    }
+    else {
+        tree->right = add(tree->right, key);
+    }
+    return balance(tree);
+}
+ 
+node* f_min(node* tree) {
+    if (tree->left == nullptr) {
+        return tree;
+    }
+    else {
+        return f_min(tree->left);
+    }
+}
+ 
+node* del_min(node* tree) {
+    if (tree->left == 0) {
+        return tree->right;
+    }
+    tree->left = del_min(tree->left);
+    return balance(tree);
+}
+ 
+void define_height(node* tree, int position, int& height) {
+    if (position == num_children(tree->right)) {
+        height = tree->key;
+    }
+    else if (position > num_children(tree->right)) {
+        define_height(tree->left, position - num_children(tree->right) - 1, height);
+    }
+    else {
+        define_height(tree->right, position, height);
+    }
+}
+ 
+node* delete_node(node* tree, int key) {
+    if (tree == nullptr) {
+        return nullptr;
+    }
+    if (key < tree->key) {
+        tree->left = delete_node(tree->left, key);
+    }
+    else if (key > tree->key) {
+        tree->right = delete_node(tree->right, key);
+    }
+    else {
+        node* r = tree->right;
+        node* l = tree->left;
+        tree->left = nullptr;
+        tree->right = nullptr;
+        delete tree;
+        if (r == nullptr) {
+            return l;
+        }
+        else {
+            node* min = f_min(r);
+            min->right = del_min(r);
+            min->left = l;
+            return balance(min);
+        }
+    }
+    return balance(tree);
+}
+ 
+void soldier_pos(node* tree, int height, int& counter) {
+    if (height == tree->key) {
+        counter += num_children(tree->right);
+    }
+    if (height > tree->key) {
+        soldier_pos(tree->right, height, counter);
+    }
+    if (height < tree->key) {
+        if (tree->right != nullptr) {
+            counter += num_children(tree->right) + 1;
+            soldier_pos(tree->left, height, counter);
+        }
+        else {
+            counter += 1;
+            soldier_pos(tree->left, height, counter);
+        }
+    }
+};
+ 
+int main()
+{
+    int n = 0;
+    cin >> n;
+ 
+    node* root = 0;
+    int position = 0;
+    int cmd = 0;
+    int height = 0;
+    int second_value = 0;
+ 
+    for (int i = 0; i < n; i++) {
+ 
+        cin >> cmd >> second_value;
+        if (cmd == 1) {
+            root = add(root, second_value);
+            position = 0;
+            soldier_pos(root, second_value, position);
+            cout << position << endl;
+        }
+        else {
+            define_height(root, second_value, height);
+            root = delete_node(root, height);
+        }
+    }
+ 
+    delete root;
+    return 0;
 }
