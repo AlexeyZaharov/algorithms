@@ -155,7 +155,7 @@ bool hash_table<T>::insert(const T& str) {
         if (_table[h].state == status::DELETED && pos == -1) {
             pos = h;
         }
-        else if (_table[h].state == status::NIL) {
+        else if (_table[h].state == status::NIL || i == _capacity - 1) {
             if (pos != h && pos != -1) {
                 h = pos;
             }
