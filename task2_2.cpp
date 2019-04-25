@@ -23,13 +23,24 @@ class tree {
 private:
     node<T>* root;
 
-    void delete_tree(node<T>* tree) {
-        if (tree != nullptr) {
-            delete_tree(tree->left);
-            delete_tree(tree->right);
+    void delete_tree() {
+        std::vector<node<T>*> level;
+        std::vector<node<T>*> vec;
+        level.push_back(root);
+        while(level.size() != 0) {
+            for (int i = 0; i < level.size(); ++i) {
+                if (level[i]->left != nullptr) {
+                    vec.push_back(level[i]->left);
+                }
+                if (level[i]->right != nullptr) {
+                    vec.push_back(level[i]->right);
+                }
+                delete(level[i]);
+            }
+            level.clear();
+            level = vec;
+            vec.clear();
         }
-
-        delete tree;
     }
 
     void delete_child_with_one_child(node<T>* parent, node<T>* child);
@@ -45,7 +56,7 @@ public:
     std::vector<T> pre_order();
 
     ~tree() {
-        delete_tree(root);
+        delete_tree();
     }
 };
 
